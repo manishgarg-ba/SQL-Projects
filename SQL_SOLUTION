@@ -96,3 +96,34 @@ JOIN best_selling_artist bsa ON bsa.artist_id = a.artist_id
 Group By c.customer_id, c.first_name, c.last_name, bsa.name
 Order By amount_spent;
 
+-- Q-10 We want to find out the most popular music Genre for each country. 
+-- We determine the most popular genre as the genre with the highest amount of purchases. 
+-- Write a query that returns each country along with the top Genre. 
+-- For countries where the maximum number of purchases is shared return all Genres.
+With popular_genre AS (
+	Select COUNT(il.quantity) AS total_purchases, c.country, g.name, g.genre_id,
+	ROW_NUMBER() OVER(PARTITION BY c.country ORDER BY COUNT(il.quantity) DESC) AS RowNo
+	FROM invoice_line il
+	JOIN invoice i ON i.invoice_id = il.invoice_id
+	JOIN customer c ON c.customer_id = i.customer_id
+	JOIN track t ON t.track_id = il.track_id
+	JOIN genre g ON g.genre_id = t.genre_id
+	Group By c.country, g.name, g.genre_id
+	Order By c.country ASC, total_purchases DESC
+)
+Select * From popular_genre Where RowNo <= 1;
+
+-- Q-11 Write a query that determines the customer that has spent the most on music for each country. 
+-- Write a query that returns the country along with the top customer and how much they spent. 
+-- For countries where the top amount spent is shared, provide all customers who spent this amount.
+With customer_with_country AS(
+	Select c.customer_id, c.first_name, c.last_name, i.billing_country, SUM(i.total) AS total_spending,
+	ROW_NUMBER() OVER (PARTITION BY i.billing_country ORDER BY SUM(i.total) DESC) AS RowNo
+	From invoice i 
+	JOIN customer c ON c.customer_id = i.customer_id
+	Group By c.customer_id, c.first_name, c.last_name, i.billing_country
+	Order By i.billing_country ASC, total_spending DESC
+)
+Select * From customer_with_country Where RowNo <= 1;
+
+*--*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*---*--*
