@@ -1,0 +1,98 @@
+-- Q-1 Who is the senior most employee based on job title?--
+Select  *
+From employee
+Order By levels DESC 
+LIMIT 1;
+
+-- Q-2 Which countries have the most Invoices?--
+Select  Count(*) AS total_invoice, billing_country
+From invoice
+Group By billing_country
+Order By total_invoice DESC;
+
+-- Q-3 What are top 3 values of total invoice?--
+Select total 
+From invoice
+Order By total DESC
+LIMIT 3;
+
+-- Q-4 Which city has the best customers? 
+-- We would like to throw a promotional Music Festival in the city we made the most money. 
+-- Write a query that returns one city that has the highest sum of invoice totals. 
+-- Return both the city name & sum of all invoice totals.
+Select SUM(total) AS Invoice_total, billing_city 
+From invoice
+Group By billing_city
+Order By Invoice_total DESC;
+
+-- Q-5 Who is the best customer? 
+-- The customer who has spent the most money will be declared the best customer. 
+-- Write a query that returns the person who has spent the most money.
+Select SUM(i.total) AS total_spendings, c.customer_id, c.first_name, c.last_name 
+From customer c 
+JOIN invoice i
+ON c.customer_id = i.customer_id
+Group By c.customer_id
+Order By total_spendings DESC
+LIMIT 1;
+
+-- Q-6 Write query to return the email, first name, last name, & Genre of all Rock Music listeners. 
+-- Return your list ordered alphabetically by email starting with A.
+Select DISTINCT c.email, c.first_name, c.last_name
+From customer c
+JOIN invoice i ON c.customer_id = i.customer_id
+JOIN invoice_line il ON i.invoice_id = il.invoice_id
+Where track_id IN(
+	Select track_id From track t
+	JOIN genre g ON t.genre_id = g.genre_id
+	Where g.name LIKE 'Rock'
+)
+Order By email;
+
+-- Alternate way is to join 5 tables with common connects and we get the same output--
+
+-- Q-7 Let's invite the artists who have written the most rock music in our dataset. 
+-- Write a query that returns the Artist name and total track count of the top 10 rock bands.
+Select ar.artist_id, ar.name, COUNT(a.artist_id ) AS total_tracks
+FROM track t
+JOIN album a ON a.album_id = t.album_id
+JOIN artist ar ON ar.artist_id = a.artist_id
+JOIN genre g ON g.genre_id = t.genre_id
+Where g.name LIKE 'Rock'
+Group By ar.artist_id
+Order By total_tracks DESC
+LIMIT 10;
+
+-- Q-8 Return all the track names that have a song length longer than the average song length.
+-- Return the Name and Milliseconds for each track. 
+-- Order by the song length with the longest songs listed first
+Select t.name, t.milliseconds
+From track t
+Where t.milliseconds > (Select AVG(milliseconds) AS avg_length From track)
+Order By t.milliseconds DESC;
+
+-- Q-9 Find how much amount spent by each customers on artist? 
+-- Write a query to return customer name, artist name and total spent.
+
+With best_selling_artist AS(
+Select ar.artist_id, ar.name,
+SUM (il.unit_price * il.quantity) AS total_sales
+From invoice_line il
+JOIN track t ON t.track_id = il.track_id
+JOIN album a ON a.album_id = t.album_id
+JOIN artist ar ON ar.artist_id = a.artist_id
+Group By ar.artist_id
+Order By total_sales DESC
+LIMIT 1
+)
+Select c.customer_id, c.first_name, c.last_name, bsa.name,
+SUM (il.unit_price * il.quantity) AS amount_spent
+From invoice i
+JOIN customer c ON c.customer_id = i.customer_id
+JOIN invoice_line il ON il.invoice_id = i.invoice_id
+JOIN track t ON il.track_id = t.track_id
+JOIN album a ON a.album_id = t.album_id
+JOIN best_selling_artist bsa ON bsa.artist_id = a.artist_id
+Group By c.customer_id, c.first_name, c.last_name, bsa.name
+Order By amount_spent;
+
