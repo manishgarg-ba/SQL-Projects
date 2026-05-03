@@ -1,4 +1,4 @@
-                                                        SQL PROJECT- MUSIC STORE DATA ANALYSIS
+                                            SQL PROJECT- MUSIC STORE DATA ANALYSIS
 
 
 Question Set 1 - Easy
